@@ -246,7 +246,25 @@ class Analytics:
 			"company": ["in", self.filters.company],
 			self.date_field: ("between", [self.filters.from_date, self.filters.to_date]),
 		}
+user_sales_person = frappe.db.get_value(
+    "Sales Person",
+    {"custom_user": frappe.session.user},
+    "name"
+)
 
+if (
+    user_sales_person
+    and frappe.session.user not in ["Administrator"]
+    and "Workspace Manager" not in frappe.get_roles(frappe.session.user)
+):
+
+    sales_invoice_list = frappe.get_all(
+        "Sales Team",
+        filters={"sales_person": user_sales_person},
+        pluck="parent"
+    )
+
+    filters["name"] = ["in", sales_invoice_list or [""]]
 		if self.filters.doc_type in ["Sales Invoice", "Purchase Invoice", "Payment Entry"]:
 			filters.update({"is_opening": "No"})
 
